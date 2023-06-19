@@ -11,10 +11,10 @@ app.use(express.json()); //req.body req.params
 //create a todo
 app.post("/todos", async (req, res) => {
   try {
-    const { description } = req.body;
+    const { description, status } = req.body;
     const newTodo = await pool.query(
-      "INSERT INTO todo(description) VALUES ($1) RETURNING *",
-      [description]
+      "INSERT INTO todo(description, status) VALUES ($1, $2) RETURNING *",
+      [description, status]
     );
     res.status(200).json(newTodo.rows[0]);
   } catch (err) {
@@ -25,7 +25,7 @@ app.post("/todos", async (req, res) => {
 //get all todos
 app.get("/todos", async (req, res) => {
   try {
-    const allTodos = await pool.query("SELECT * FROM todo ");
+    const allTodos = await pool.query("SELECT * FROM todo ORDER BY status, todo_id DESC");
     res.status(200).json(allTodos.rows);
   } catch (err) {
     console.error(err.message);
@@ -59,6 +59,23 @@ app.put("/todos/:id", async (req, res) => {
     console.error(err.message);
   }
 });
+
+
+//update status todo
+app.put("/todos/status/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const updateTodo = await pool.query(
+      "UPDATE todo SET status = $1 WHERE todo_id = $2",
+      [status, id]
+    );
+    res.status(200).json("Todo was updadated!");
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
 
 //delete a todo
 app.delete("/todos/:id", async (req, res) => {
